@@ -1,15 +1,19 @@
 async function main () {
-    if (!process.env.PORT) {
-        console.log('process.env.PORT not set. Please set the environment variable and try again!')
-        return
-    }
+    const url = (process.env.PROTOCOL || 'http') + '://' + (process.env.HOST || 'localhost') + ':' + (process.env.PORT || '8080') + '/sessions'
+    // const url = (process.env.PROTOCOL || 'http') + '://' + (process.env.HOST || 'localhost') + '/sessions'
+    console.log('fetching from url:', url)
 
     let counter = 0
     setInterval(async () => {
         counter++
-        const rawResult = await fetch ('http://localhost:' + process.env.PORT + '/sessions?count=' + counter)
-        const result = await rawResult.json()
-        console.log(counter, 'count:', result.length)
-    }, 7)
+        const response = await fetch (url + '?count=' + counter, { method: 'GET' })
+        if (response.statusText === 'OK') {
+            const result = await response.json()
+            console.log(counter, 'count:', result.length)
+        } else {
+            console.error('ERROR: ' + response.status + ' ' + response.statusText)
+        }
+    }, 5)
+    // }, 1000)
 }
 main()
