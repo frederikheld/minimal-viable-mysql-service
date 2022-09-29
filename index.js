@@ -124,23 +124,10 @@ async function addDummyData () {
     })
 }
 
-// const router = express.Router()
-
-// router.get('/sessions', async (request, response) => {
-//     const results = await getAllSessions()
-//     response.status(200).send(results)
-// })
-
-// const app = express()
-// app.use(router)
-// app.listen(process.env.PORT, () => {
-//     console.log('connect to api on port ' + process.env.PORT)
-// })
 
 async function main () {
 
-    let counter = 0
-
+    // init MySQL db:
     const result = await createTableIfNotExists()
     if (result === true) {
         console.log('database did not exist --> created')
@@ -150,10 +137,30 @@ async function main () {
         console.log('database did already exist')
     }
 
-    setInterval(async () => {
-        const result = await getAllSessions()
-        console.log(++counter, 'count:', result.length)
-    }, 7)
+    // init API server:
+    const router = express.Router()
+
+    router.get('/sessions', async (request, response) => {
+        const results = await getAllSessions()
+        response.status(200).send(results)
+    })
+
+    const app = express()
+    app.use((request, response, next) => {
+        console.log('request received ' + request.query.count)
+        next()
+    })
+    app.use(router)
+    app.listen(process.env.PORT, () => {
+        console.log('connect to api on port ' + process.env.PORT)
+    })
+
+    // stress test MySQL db directly:
+    // let counter = 0
+    // setInterval(async () => {
+    //     const result = await getAllSessions()
+    //     console.log(++counter, 'count:', result.length)
+    // }, 7)
 }
 
 main()
