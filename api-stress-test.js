@@ -13,7 +13,7 @@ async function main () {
         } else {
             console.error('ERROR: ' + response.status + ' ' + response.statusText)
         }
-    }, 5)
+    }, 3)
     // }, 1000)
 }
 main()
