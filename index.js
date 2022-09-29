@@ -1,21 +1,23 @@
 const express = require('express')
 const mysql = require('mysql')
 
-const connectionSettings = {
+const MYSQL_CONNECTION_SETTINGS = {
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_SECRET,
     database: process.env.MYSQL_DATABASE
 }
-console.log('MySQL connection settings:', connectionSettings)
+console.log('MySQL connection settings:', MYSQL_CONNECTION_SETTINGS)
 
 /**
+ * Runs a MySQL query and returns the raw result.
  * 
- * @returns resolves with true, if the table was just created and false, if it already existed. Rejects with an error if an error occured.
+ * @param {String} query MySQL query
+ * @returns
  */
-async function createTableIfNotExists () {
+async function runQuery(query) {
     return new Promise (async (resolveFunction, rejectFunction) => {
-        const db = mysql.createConnection(connectionSettings)
+        const db = mysql.createConnection(MYSQL_CONNECTION_SETTINGS)
 
         await new Promise((resolve) => {
             db.connect((error) => {
@@ -27,8 +29,6 @@ async function createTableIfNotExists () {
                 }
             })
         })
-
-        const query = 'CREATE TABLE if not exists `sessions` (`id` INT AUTO_INCREMENT PRIMARY KEY, `sessioncode` VARCHAR(16) UNIQUE NOT NULL, `bpm` SMALLINT UNSIGNED NOT NULL, `synctime` int(11) NOT NULL)'
 
         const result = await new Promise((resolve) => {
             db.query(query, (error, result) => {
@@ -43,10 +43,28 @@ async function createTableIfNotExists () {
 
         db.end()
 
-        if (result.warningCount > 0) {
-            resolveFunction(false)
-        } else {
-            resolveFunction(true)
+        resolveFunction(result)
+    })
+}
+
+/**
+ * 
+ * @returns resolves with true, if the table was just created and false, if it already existed. Rejects with an error if an error occured.
+ */
+async function createTableIfNotExists () {
+    return new Promise (async (resolve, reject) => {
+        const query = 'CREATE TABLE if not exists `sessions` (`id` INT AUTO_INCREMENT PRIMARY KEY, `sessioncode` VARCHAR(16) UNIQUE NOT NULL, `bpm` SMALLINT UNSIGNED NOT NULL, `synctime` int(11) NOT NULL)'
+
+        try {
+            const result = await runQuery(query)
+
+            if (result.warningCount > 0) {
+                resolve(false)
+            } else {
+                resolve(true)
+            }
+        } catch (error) {
+            reject(error)
         }
     })
 }
@@ -71,7 +89,7 @@ async function addDummyData () {
     ]
 
     return new Promise(async (resolveFunction, rejectFunction) => {
-        const db = mysql.createConnection(connectionSettings)
+        const db = mysql.createConnection(MYSQL_CONNECTION_SETTINGS)
 
         await new Promise((resolve) => {
             db.connect((error) => {
@@ -106,36 +124,16 @@ async function addDummyData () {
 }
 
 async function getAllSessions () {
-    return new Promise (async (resolveFunction, rejectFunction) => {
-        const db = mysql.createConnection(connectionSettings)
-
-        await new Promise((resolve) => {
-            db.connect((error) => {
-                if (error) {
-                    db.end()
-                    rejectFunction(error)
-                } else {
-                    resolve()
-                }
-            })
-        })
-
+    return new Promise (async (resolve, reject) => {
         const query = 'SELECT * FROM `sessions`'
 
-        const result = await new Promise((resolve) => {
-            db.query(query, (error, result) => {
-                if (error) {
-                    db.end()
-                    rejectFunction(error)
-                } else {
-                    resolve(result)
-                }
-            })
-        })
+        try {
+            const result = await runQuery(query)
 
-        db.end()
-
-        resolveFunction(result)
+            resolve(result)
+        } catch (error) {
+            reject(error)
+        }
     })
 }
 
