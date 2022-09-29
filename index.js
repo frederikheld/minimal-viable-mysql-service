@@ -20,6 +20,7 @@ async function createTableIfNotExists () {
         await new Promise((resolve) => {
             db.connect((error) => {
                 if (error) {
+                    db.end()
                     rejectFunction(error)
                 } else {
                     resolve()
@@ -31,11 +32,16 @@ async function createTableIfNotExists () {
 
         const result = await new Promise((resolve) => {
             db.query(query, (error, result) => {
-                if (error) rejectFunction(error)
-
-                resolve(result)
+                if (error) {
+                    db.end()
+                    rejectFunction(error)
+                } else {
+                    resolve(result)
+                }
             })
         })
+
+        db.end()
 
         if (result.warningCount > 0) {
             resolveFunction(false)
@@ -70,6 +76,7 @@ async function addDummyData () {
         await new Promise((resolve) => {
             db.connect((error) => {
                 if (error) {
+                    db.end()
                     rejectFunction(error)
                 } else {
                     resolve()
@@ -83,6 +90,7 @@ async function addDummyData () {
             const result = await new Promise((resolve) => {
                 db.query(query, (error, result) => {
                     if (error) {
+                        db.end()
                         rejectFunction(error)
                     } else {
                         resolve(result)
@@ -90,6 +98,8 @@ async function addDummyData () {
                 })
             })
         })
+
+        db.end()
 
         resolveFunction()
     })
@@ -102,6 +112,7 @@ async function getAllSessions () {
         await new Promise((resolve) => {
             db.connect((error) => {
                 if (error) {
+                    db.end()
                     rejectFunction(error)
                 } else {
                     resolve()
@@ -114,6 +125,7 @@ async function getAllSessions () {
         const result = await new Promise((resolve) => {
             db.query(query, (error, result) => {
                 if (error) {
+                    db.end()
                     rejectFunction(error)
                 } else {
                     resolve(result)
@@ -132,6 +144,7 @@ async function main () {
     // init MySQL db:
     try {
         const result = await createTableIfNotExists()
+
         if (result === true) {
             console.log('database did not exist --> created')
             try {
