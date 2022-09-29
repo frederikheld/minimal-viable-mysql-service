@@ -1,6 +1,8 @@
 const express = require('express')
 const mysql = require('mysql')
 
+const routes = require('./routes')
+
 const MYSQL_CONNECTION_SETTINGS = {
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
@@ -123,19 +125,6 @@ async function addDummyData () {
     })
 }
 
-async function getAllSessions () {
-    return new Promise (async (resolve, reject) => {
-        const query = 'SELECT * FROM `sessions`'
-
-        try {
-            const result = await runQuery(query)
-
-            resolve(result)
-        } catch (error) {
-            reject(error)
-        }
-    })
-}
 
 async function main () {
 
@@ -159,34 +148,12 @@ async function main () {
     }
 
     // init API server:
-    const router = express.Router()
-
-    router.get('/sessions', async (request, response) => {
-        try {
-            const results = await getAllSessions()
-            // console.log('main results:', results)
-
-            if (results) {
-                response.status(200).send(results)
-            } else {
-                response.status(500)
-            }
-        } catch (error) {
-            if (['ER_NO_SUCH_TABLE'].includes(error.code)) {
-                console.error('ERROR:', error)
-                response.status(500).send()
-            } else {
-                response.status(500).send()
-            }
-        }
-    })
-
     const app = express()
     app.use((request, response, next) => {
         console.log('request received ' + request.query.count)
         next()
     })
-    app.use(router)
+    app.use(routes)
     app.listen(process.env.PORT, () => {
         console.log('connect to api on port ' + process.env.PORT)
     })
