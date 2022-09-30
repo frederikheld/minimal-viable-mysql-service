@@ -1,13 +1,27 @@
 const actions = { }
 
-const { getAllSessions, getSession } = require('./functions')
+const { getAllSessions, getSession, createSession } = require('./functions')
 
+
+// GET
+
+/**
+ * 
+ * @param {*} request 
+ * @param {*} response 
+ */
 actions.getAllSessions = async (request, response) => {
-    try {
-        const results = await getAllSessions()
+    const MAX_LIMIT = 100
+    const DEFAULT_LIMIT = 10
 
-        if (results) {
-            response.status(200).send(results)
+    const start = request.body.start || 0
+    const limit = (request.body.limit ? (request.body.limit < MAX_LIMIT ? request.body.limit : MAX_LIMIT) : DEFAULT_LIMIT)
+
+    try {
+        const result = await getAllSessions(start, limit)
+
+        if (result) {
+            response.status(200).send(result)
         } else {
             response.status(500).send()
         }
@@ -18,15 +32,35 @@ actions.getAllSessions = async (request, response) => {
 
 actions.getSession = async (request, response) => {
     try {
-        const results = await getSession(request.params.sessionCode)
+        const result = await getSession(request.params.sessionCode)
 
-        if (results) {
-            response.status(200).send(results)
+        if (result) {
+            response.status(200).send(result)
         } else {
-            response.status(404)
+            response.status(404).send()
         }
     } catch (error) {
         response.status(500).send()
+    }
+}
+
+// POST
+
+actions.createSession = async (request, response) => {
+    console.log('request.body:', request.body)
+
+    try {
+        const result = await createSession(request.body.bpm)
+        console.log('result:', result)
+
+        response.status(201).send()
+    } catch (error) {
+        console.log('error:', error.message)
+        if (error.message === 'ERR_INVALID_ARG_VALUE') {
+            response.status(400).send({ error: 'missing parameter' })
+        } else {
+            response.status(500).send()
+        }
     }
 }
 
